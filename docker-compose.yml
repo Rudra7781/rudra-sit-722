@@ -119,7 +119,8 @@ services:
       - "8001:8000" # Map container port 8000 to host port 8001 (as per your request)
     environment:
       POSTGRES_HOST: order_db # Connects to the 'order_db' service within Docker network
-      CUSTOMER_SERVICE_URL: http://customer_service-w05-aks:8000 # Internal Docker network URL for Customer Service
+      CUSTOMER_SERVICE_URL: http://customer_service-w10-aks:8000 # Internal Docker network URL for Customer Service
+      PRODUCT_SERVICE_URL: http://product_service-w10-aks:8000 # Internal Docker network URL for Customer Service
       RABBITMQ_HOST: rabbitmq # Internal Docker network hostname for RabbitMQ
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: guest

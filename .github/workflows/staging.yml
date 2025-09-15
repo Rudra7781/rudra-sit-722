@@ -14,69 +14,69 @@ env:
   IMAGE_TAG: ${{ github.event.client_payload.image_tag || github.event.inputs.image_tag || 'latest' }}
   # Create unique staging environment names
   STAGING_RG: week10rudra-rg
-  STAGING_AKS: aks-staging-${{ github.event.client_payload.run_id || github.run_id }}
-
+  # STAGING_AKS: aks-staging-${{ github.event.client_payload.run_id || github.run_id }}
+  STAGING_AKS: week10rudra-aks
 jobs:
   # Job 1: Create Staging Infrastructure
-  create_staging_infrastructure:
-    runs-on: ubuntu-latest
+  # create_staging_infrastructure:
+  #   runs-on: ubuntu-latest
     
-    outputs:
-      staging-rg: ${{ env.STAGING_RG }}
-      staging-aks: ${{ env.STAGING_AKS }}
-      image-tag: latest
+  #   outputs:
+  #     staging-rg: ${{ env.STAGING_RG }}
+  #     staging-aks: ${{ env.STAGING_AKS }}
+  #     image-tag: latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Display Trigger Information
-        run: |
-          echo " Stage 2 Pipeline Triggered"
-          echo "Image Tag: latest"
-          echo "Staging Resource Group: ${{ env.STAGING_RG }}"
-          echo "Staging AKS Cluster: ${{ env.STAGING_AKS }}"
-
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Display Trigger Information
+  #       run: |
+  #         echo " Stage 2 Pipeline Triggered"
+  #         echo "Image Tag: latest"
+  #         echo "Staging Resource Group: ${{ env.STAGING_RG }}"
+  #         echo "Staging AKS Cluster: ${{ env.STAGING_AKS }}"
 
 
-      - name: Create Staging AKS Cluster
-        run: |
-          echo " Creating staging AKS cluster..."
-          az aks create \
-            --resource-group ${{ env.STAGING_RG }} \
-            --name ${{ env.STAGING_AKS }} \
-            --node-count 1 \
-            --node-vm-size Standard_B2s \
-            --generate-ssh-keys \
-            --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
-            --tags Environment=Staging Purpose=Testing AutoDelete=true
+  #     - name: Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Get AKS Credentials
-        run: |
-          az aks get-credentials \
-            --resource-group ${{ env.STAGING_RG }} \
-            --name ${{ env.STAGING_AKS }} \
-            --overwrite-existing
 
-      - name: Verify Cluster Connection
-        run: |
-          echo " Verifying cluster connectivity..."
-          kubectl get nodes
-          kubectl cluster-info
+  #     - name: Create Staging AKS Cluster
+  #       run: |
+  #         echo " Creating staging AKS cluster..."
+  #         az aks create \
+  #           --resource-group ${{ env.STAGING_RG }} \
+  #           --name ${{ env.STAGING_AKS }} \
+  #           --node-count 1 \
+  #           --node-vm-size Standard_B2s \
+  #           --generate-ssh-keys \
+  #           --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
+  #           --tags Environment=Staging Purpose=Testing AutoDelete=true
+
+  #     - name: Get AKS Credentials
+  #       run: |
+  #         az aks get-credentials \
+  #           --resource-group ${{ env.STAGING_RG }} \
+  #           --name ${{ env.STAGING_AKS }} \
+  #           --overwrite-existing
+
+  #     - name: Verify Cluster Connection
+  #       run: |
+  #         echo " Verifying cluster connectivity..."
+  #         kubectl get nodes
+  #         kubectl cluster-info
                     
-      - name: Logout from Azure
-        run: az logout
-        if: always()
+  #     - name: Logout from Azure
+  #       run: az logout
+  #       if: always()
 
   #Job 2: Deploy Applications to Staging
   deploy_to_staging:
     runs-on: ubuntu-latest
-    needs: create_staging_infrastructure
+    # needs: create_staging_infrastructure
     if: success()
 
     steps:
@@ -116,9 +116,9 @@ jobs:
       - name: Wait for Databases to be Ready
         run: |
           echo " Waiting for databases to be ready..."
-          kubectl wait --for=condition=available --timeout=300s deployment/product-db-w08e1 -n staging
-          kubectl wait --for=condition=available --timeout=300s deployment/order-db-w08e1 -n staging
-          kubectl wait --for=condition=available --timeout=300s deployment/customer-db-w08e1 -n staging
+          kubectl wait --for=condition=available --timeout=300s deployment/product-db-service-w08e1 -n staging
+          kubectl wait --for=condition=available --timeout=300s deployment/order-db-service-w08e1 -n staging
+          kubectl wait --for=condition=available --timeout=300s deployment/customer-db-service-w08e1 -n staging
           echo " Databases are ready!"
 
       - name: Deploy Backend Microservices (Product, Order)
@@ -249,11 +249,22 @@ jobs:
         run: |
           echo "CLEANING UP STAGING ENVIRONMENT"
           
-              echo "Deleting staging AKS cluster..."
-              az aks delete \
-                --name ${{ env.STAGING_AKS }} \
-                --resource-group week10rudra-rg \
-                --yes
+          echo "Deleting all services in AKS..."
+          # Delete all services in all namespaces
+          kubectl delete svc --all --all-namespaces
+
+          echo "Deleting all deployments in AKS..."
+          # Optional: delete all deployments if you also want to remove pods
+          kubectl delete deployment --all --all-namespaces
+      # - name: Cleanup Staging Environment
+      #   run: |
+      #     echo "CLEANING UP STAGING ENVIRONMENT"
+          
+      #         echo "Deleting staging AKS cluster..."
+      #         az aks delete \
+      #           --name ${{ env.STAGING_AKS }} \
+      #           --resource-group week10rudra-rg \
+      #           --yes
                     
       - name: Logout from Azure
         run: az logout

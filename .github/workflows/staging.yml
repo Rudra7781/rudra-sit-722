@@ -5,6 +5,12 @@ on:
   repository_dispatch:
     types: [stage2_deploy]
   
+  workflow_call:
+    inputs:
+        image_tag:
+          description: 'Image tag to deploy'
+          required: true
+          default: 'latest'
   # Manual trigger for testing purposes
   workflow_dispatch:
     inputs:

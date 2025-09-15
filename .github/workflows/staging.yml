@@ -89,12 +89,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: DEBUG
-        run: |
-          echo "TEST"
-          pwd 
-          ls
-          cat k8s/configmaps.yaml
+
 
       # - name: Get AKS Credentials
       #   run: |

@@ -83,16 +83,16 @@ services:
     build:
       context: ./backend/product_service
       dockerfile: Dockerfile
-    image: week05_example01_product_service:latest
+    image: week10_example01_product_service:latest
     container_name: product_api_container
     restart: always
     ports:
       - "8000:8000" # Map container port 8000 to host port 8000 (as per your request)
     environment:
       POSTGRES_HOST: product_db # Connects to the 'product_db' service within Docker network
-      AZURE_STORAGE_ACCOUNT_NAME: sit722devopsrudra2306stg # Replace with your Azure Storage account name
-      AZURE_STORAGE_ACCOUNT_KEY: <> # Replace with your Azure Storage account key
-      AZURE_STORAGE_CONTAINER_NAME: week06container # Replace with your Azure Storage container name
+      AZURE_STORAGE_ACCOUNT_NAME: week10rudrastorage # Replace with your Azure Storage account name
+      AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} # Replace with your Azure Storage account key
+      AZURE_STORAGE_CONTAINER_NAME: week10container # Replace with your Azure Storage container name
       AZURE_SAS_TOKEN_EXPIRY_HOURS: 24
       RABBITMQ_HOST: rabbitmq # Internal Docker network hostname for RabbitMQ
       RABBITMQ_PORT: 5672
@@ -112,14 +112,15 @@ services:
     build:
       context: ./backend/order_service
       dockerfile: Dockerfile
-    image: week05_example01_order_service:latest
+    image: week10_example01_order_service:latest
     container_name: order_api_container
     restart: always
     ports:
       - "8001:8000" # Map container port 8000 to host port 8001 (as per your request)
     environment:
       POSTGRES_HOST: order_db # Connects to the 'order_db' service within Docker network
-      CUSTOMER_SERVICE_URL: http://customer_service-w05-aks:8000 # Internal Docker network URL for Customer Service
+      CUSTOMER_SERVICE_URL: http://customer_service-w10-aks:8000 # Internal Docker network URL for Customer Service
+      PRODUCT_SERVICE_URL: http://product_service-w10-aks:8000 # Internal Docker network URL for Customer Service
       RABBITMQ_HOST: rabbitmq # Internal Docker network hostname for RabbitMQ
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: guest
@@ -140,7 +141,7 @@ services:
     build:
       context: ./backend/customer_service
       dockerfile: Dockerfile
-    image: week05_example01_customer_service:latest
+    image: week10_example01_customer_service:latest
     container_name: customer_api_container
     restart: always
     ports:
@@ -166,7 +167,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: week05_example01_frontend:latest
+    image: week10_example01_frontend:latest
     container_name: product_order_frontend
     restart: always
     ports:

@@ -172,8 +172,8 @@ jobs:
               run: az logout
               if: always()
 
-    # staging_deployment:
+    staging_deployment:
 
-    #     needs: [Test_Backend_Services, Build_and_Push_Docker_Images_to_ACR]
-    #     uses: ./.github/workflows/staging.yml
-    #     secrets: inherit
+        needs: [Test_Backend_Services, Build_and_Push_Docker_Images_to_ACR]
+        uses: ./.github/workflows/staging.yml
+        secrets: inherit

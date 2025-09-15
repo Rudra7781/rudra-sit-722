@@ -1,11 +1,11 @@
 name: Stage 2 - Staging Deployment Pipeline
 
 on:
+  # Manual trigger for testing purposes
+  workflow_dispatch:
 
   workflow_call:
 
-  # Manual trigger for testing purposes
-  workflow_dispatch:
 
 
 env:

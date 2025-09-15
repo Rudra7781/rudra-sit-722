@@ -13,7 +13,7 @@ env:
   # Use image tag from Stage 1 trigger or manual input
   IMAGE_TAG: ${{ github.event.client_payload.image_tag || github.event.inputs.image_tag || 'latest' }}
   # Create unique staging environment names
-  STAGING_RG: rg-staging-${{ github.event.client_payload.run_id || github.run_id }}
+  STAGING_RG: week10rudra-rg
   STAGING_AKS: aks-staging-${{ github.event.client_payload.run_id || github.run_id }}
 
 jobs:
@@ -40,13 +40,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Create Staging Resource Group
-        run: |
-          echo " Creating staging resource group..."
-          az group create \
-            --name ${{ env.STAGING_RG }} \
-            --location australiaeast \
-            --tags Environment=Staging Purpose=Testing AutoDelete=true
+      # - name: Create Staging Resource Group
+      #   run: |
+      #     echo " Creating staging resource group..."
+      #     az group create \
+      #       --name ${{ env.STAGING_RG }} \
+      #       --location australiaeast \
+      #       --tags Environment=Staging Purpose=Testing AutoDelete=true
 
       - name: Create Staging AKS Cluster
         run: |
@@ -479,14 +479,13 @@ jobs:
         run: |
           echo "CLEANING UP STAGING ENVIRONMENT"
           
-          # Check if resource group exists before attempting deletion
-          if az group exists --name ${{ env.STAGING_RG }}; then
-            echo " Deleting staging resource group and all resources..."
-            az group delete \
-              --name ${{ env.STAGING_RG }} \
-              --yes \
-              --no-wait
-            
+              echo "Deleting staging AKS cluster..."
+              az aks delete \
+                --name ${{ env.STAGING_AKS }} \
+                --resource-group week10rudra-rg \
+                --yes \
+                --no-wait
+                
             echo " The deletion process runs asynchronously and may take several minutes to complete."
           else
             echo "⚠️  Resource group ${{ env.STAGING_RG }} not found. May have been deleted already."

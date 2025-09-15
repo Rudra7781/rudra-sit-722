@@ -1,10 +1,7 @@
 name: Stage 2 - Staging Deployment Pipeline
 
 on:
-  # Triggered by Stage 1 workflow when images are successfully uploaded to ACR
-  repository_dispatch:
-    types: [stage2_deploy]
-  
+
   workflow_call:
     inputs:
         image_tag:

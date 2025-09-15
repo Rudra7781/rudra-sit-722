@@ -76,7 +76,7 @@ jobs:
   #Job 2: Deploy Applications to Staging
   deploy_to_staging:
     runs-on: ubuntu-latest
-    # needs: create_staging_infrastructure
+    needs: create_staging_infrastructure
     if: success()
 
     steps:

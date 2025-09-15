@@ -43,13 +43,6 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Create Staging Resource Group
-        run: |
-          echo " Creating staging resource group..."
-          az group create \
-            --name ${{ env.STAGING_RG }} \
-            --location australiaeast \
-            --tags Environment=Staging Purpose=Testing AutoDelete=true
 
       - name: Create Staging AKS Cluster
         run: |

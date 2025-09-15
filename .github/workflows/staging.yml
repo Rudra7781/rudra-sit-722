@@ -57,7 +57,7 @@ jobs:
             --node-count 1 \
             --node-vm-size Standard_B2s \
             --generate-ssh-keys \
-            --attach-acr ${{ env.ACR_LOGIN_SERVER }} \
+            --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
             --tags Environment=Staging Purpose=Testing AutoDelete=true
 
       - name: Get AKS Credentials
@@ -485,7 +485,7 @@ jobs:
                 --resource-group week10rudra-rg \
                 --yes \
                 --no-wait
-                
+
             echo " The deletion process runs asynchronously and may take several minutes to complete."
           else
             echo "⚠️  Resource group ${{ env.STAGING_RG }} not found. May have been deleted already."

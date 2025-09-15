@@ -43,7 +43,8 @@ jobs:
       - name: Test k8s exists
         run: |
           echo "Deploying backend infrastructure..."
-          cd k8s/
+          pwd
+          ls -la
       # - name: Create Staging Resource Group
       #   run: |
       #     echo " Creating staging resource group..."

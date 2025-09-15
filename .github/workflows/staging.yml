@@ -204,6 +204,10 @@ jobs:
           echo "order_ip=$ORDER_SERVICE_IP" >> $GITHUB_ENV
           echo "customer_ip=$CUSTOMER_SERVICE_IP" >> $GITHUB_ENV
           
+          echo "product_ip=$PRODUCT_SERVICE_IP" >> $GITHUB_OUTPUT
+          echo "order_ip=$ORDER_SERVICE_IP" >> $GITHUB_OUTPUT
+          echo "customer_ip=$CUSTOMER_SERVICE_IP" >> $GITHUB_OUTPUT
+
           echo "Product Service IP: $PRODUCT_SERVICE_IP"
           echo "Order Service IP: $ORDER_SERVICE_IP"
           echo "Customer Service IP: $CUSTOMER_SERVICE_IP"

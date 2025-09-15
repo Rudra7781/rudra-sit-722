@@ -100,12 +100,12 @@ jobs:
       - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
         run: |
           echo "Deploying backend infrastructure..."
-          cd k8s/
-          kubectl apply -f configmaps.yaml
-          kubectl apply -f secrets.yaml
-          kubectl apply -f product-db.yaml
-          kubectl apply -f order-db.yaml
-
+          # cd k8s/
+          kubectl apply -f /k8s/configmaps.yaml
+          kubectl apply -f /k8s/secrets.yaml
+          kubectl apply -f /k8s/product-db.yaml
+          kubectl apply -f /k8s/order-db.yaml
+        
       - name: Wait for Databases to be Ready
         run: |
           echo "⏳ Waiting for databases to be ready..."
@@ -116,9 +116,9 @@ jobs:
       - name: Deploy Backend Microservices (Product, Order)
         run: |
           echo "Deploying backend microservices..."
-          cd k8s/
-          kubectl apply -f product-service.yaml
-          kubectl apply -f order-service.yaml
+          #cd k8s/
+          kubectl apply -f /k8s/product-service.yaml
+          kubectl apply -f /k8s/order-service.yaml
 
 
       - name: Wait for Application Services to be Ready
@@ -265,9 +265,6 @@ jobs:
                 --yes \
                 --no-wait
 
-            echo " The deletion process runs asynchronously and may take several minutes to complete."
-          else
-            echo "⚠️  Resource group ${{ env.STAGING_RG }} not found. May have been deleted already."
-          fi
-
+            
+         
   

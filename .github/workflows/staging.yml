@@ -254,8 +254,8 @@ jobs:
     needs: [create_staging_infrastructure, deploy_to_staging, run_staging_tests]
     uses: ./.github/workflows/frontend-cd.yml
     with:
-      aks_cluster_name: ${{ needs.create_staging_infrastructure.outputs.STAGING_AKS }}
-      aks_resource_group: ${{ needs.create_staging_infrastructure.outputs.STAGING_RG }}
+      aks_cluster_name: ${{ needs.create_staging_infrastructure.outputs.staging-aks }}
+      aks_resource_group: ${{ needs.create_staging_infrastructure.outputs.staging-rg }}
       product_api_ip: ${{ needs.run_staging_tests.outputs.product_api_ip }}
       order_api_ip: ${{ needs.run_staging_tests.outputs.order_api_ip }}
       customer_api_ip: ${{ needs.run_staging_tests.outputs.customer_api_ip }}

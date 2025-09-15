@@ -273,6 +273,14 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.STAGING_RG }} \
+            --name ${{ env.STAGING_AKS }} \
+            --overwrite-existing
+          
+          kubectl get svc -n staging
       # - name: Wait for manual testing
       #   run: |
       #     echo " Pausing for manual testing (5 minutes)..."

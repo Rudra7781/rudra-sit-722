@@ -76,7 +76,9 @@ jobs:
 
             - name: Install dependencies
               run: |
-                  ls
+                  cd k8s/
+                  ls 
+                  cd ..
                   pip install --upgrade pip
                   # Loop through each backend service folder
                   for req in backend/*/requirements.txt; do

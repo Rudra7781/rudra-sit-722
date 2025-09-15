@@ -95,7 +95,7 @@ jobs:
                   echo "Deploying frontend with latest tag to AKS cluster: ${{ inputs.aks_cluster_name }}"
                   cd k8s/
                   # Ensure frontend-service.yaml is configured with your ACR
-                  kubectl apply -f frontend.yaml
+                  kubectl apply -f frontend.yaml -n staging
 
             - name: Logout from Azure (AKS deployment)
               run: az logout

@@ -1,0 +1,138 @@
+name: Deploy to Production 
+
+# Trigger the workflow on pushes to the 'main' branch
+# You can also add 'pull_request:' to run on PRs test
+# changes for development
+on:
+  # Manual trigger
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main # Push to main runs everything
+      - development # Push to development runs everything
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend_ci.yml'
+
+
+
+  # Trigger CI (tests only) on PRs to main OR development
+  pull_request:
+    branches: # Runs on PRs targeting these branches
+      - main
+      - development
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend_ci.yml'
+
+
+      
+# Define global environment variables that can be used across jobs
+env:
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  # Use image tag from Stage 1 trigger or manual input
+  IMAGE_TAG: ${{ github.event.client_payload.image_tag || github.event.inputs.image_tag || 'latest' }}
+  # Create unique production environment names
+  STAGING_RG: week10rudra-rg
+  STAGING_AKS: week10rudra-aks
+
+jobs:
+
+  deploy_to_production:
+    runs-on: ubuntu-latest
+    needs: create_staging_infrastructure
+    if: success()
+
+    outputs:
+      staging-rg: ${{ env.STAGING_RG }}
+      staging-aks: ${{ env.STAGING_AKS }}
+      image-tag: latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.STAGING_RG }} \
+            --name ${{ env.STAGING_AKS }} \
+            --overwrite-existing
+
+      - name: Create Kubernetes Namespace
+        run: |
+          echo " Setting up staging namespace..."
+          kubectl create namespace staging --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
+        run: |
+          echo "Deploying backend infrastructure..."
+          cd k8s/
+          kubectl apply -f configmaps.yaml 
+          kubectl apply -f secrets.yaml
+          kubectl apply -f product-db.yaml
+          kubectl apply -f order-db.yaml
+          kubectl apply -f customer-db.yaml
+        
+      - name: Wait for Databases to be Ready
+        run: |
+          echo " Waiting for databases to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment/product-db-deployment-w08e1
+          kubectl wait --for=condition=available --timeout=300s deployment/order-db-deployment-w08e1
+          kubectl wait --for=condition=available --timeout=300s deployment/customer-db-deployment-w08e1
+          echo " Databases are ready!"
+
+      - name: Deploy Backend Microservices (Product, Order)
+        run: |
+          echo "Deploying backend microservices..."
+          cd k8s/
+          kubectl apply -f product-service.yaml
+          kubectl apply -f order-service.yaml
+          kubectl apply -f customer-service.yaml
+
+
+      - name: Wait for Application Services to be Ready
+        run: |
+          echo " Waiting for application services to be ready..."
+          kubectl wait --for=condition=available --timeout=30s deployment/product-service-w08e1
+          kubectl wait --for=condition=available --timeout=30s deployment/order-service-w08e1
+          kubectl wait --for=condition=available --timeout=30s deployment/customer-service-w08e1
+          echo " Application services are ready!"
+
+      - name: Get Staging Environment URLs
+        run: |
+          echo " Retrieving staging environment URLs..."
+          kubectl get services
+          
+          # Wait for external IPs with timeout
+          echo " Waiting for LoadBalancer external IPs..."
+          timeout 10 bash -c '
+          while [[ $(kubectl get svc product-service-w08e1 -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
+            echo "Waiting for product-service-w08e1 external IP..."
+            sleep 15
+          done
+          while [[ $(kubectl get svc order-service-w08e1 -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
+            echo "Waiting for order-service-w08e1 external IP..."
+            sleep 15
+          done
+          while [[ $(kubectl get svc customer-service-w08e1 -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
+            echo "Waiting for customer-service-w08e1 external IP..."
+            sleep 15
+          done
+          ' || echo "  LoadBalancer IPs may take additional time to provision"
+
+    
+          echo " STAGING ENVIRONMENT DEPLOYED SUCCESSFULLY!"
+                     
+      - name: Logout from Azure
+        run: az logout
+        if: always()

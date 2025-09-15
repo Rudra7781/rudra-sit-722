@@ -47,14 +47,14 @@ jobs:
       # - name: Create Staging AKS Cluster
       #   run: |
       #     echo " Creating staging AKS cluster..."
-      #     az aks create \
-      #       --resource-group ${{ env.STAGING_RG }} \
-      #       --name ${{ env.STAGING_AKS }} \
-      #       --node-count 1 \
-      #       --node-vm-size Standard_B2s \
-      #       --generate-ssh-keys \
-      #       --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
-      #       --tags Environment=Staging Purpose=Testing AutoDelete=true
+          # az aks create \
+          #   --resource-group ${{ env.STAGING_RG }} \
+          #   --name ${{ env.STAGING_AKS }} \
+          #   --node-count 1 \
+          #   --node-vm-size Standard_B2s \
+          #   --generate-ssh-keys \
+          #   --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
+          #   --tags Environment=Staging Purpose=Testing AutoDelete=true
 
       # - name: Get AKS Credentials
       #   run: |

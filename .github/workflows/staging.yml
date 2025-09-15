@@ -94,7 +94,7 @@ jobs:
           echo "TEST"
           pwd 
           ls
-          cat /k8s/configmaps.yaml
+          cat k8s/configmaps.yaml
 
       # - name: Get AKS Credentials
       #   run: |

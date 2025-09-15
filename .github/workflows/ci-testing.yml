@@ -76,11 +76,11 @@ jobs:
 
             - name: Install dependencies
               run: |
+                  ls
                   pip install --upgrade pip
                   # Loop through each backend service folder
                   for req in backend/*/requirements.txt; do
                     echo "Installing $req"
-                    pwd
                     pip install -r "$req"
                   done
                   # Install CI tools

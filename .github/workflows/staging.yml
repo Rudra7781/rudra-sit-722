@@ -133,9 +133,9 @@ jobs:
       - name: Wait for Application Services to be Ready
         run: |
           echo " Waiting for application services to be ready..."
-          kubectl wait --for=condition=available --timeout=30s deployment/product-service-w08e1 -n staging
-          kubectl wait --for=condition=available --timeout=30s deployment/order-service-w08e1 -n staging
-          kubectl wait --for=condition=available --timeout=30s deployment/customer-service-w08e1 -n staging
+          kubectl wait --for=condition=available --timeout=60s deployment/product-service-w08e1 -n staging
+          kubectl wait --for=condition=available --timeout=60s deployment/order-service-w08e1 -n staging
+          kubectl wait --for=condition=available --timeout=60s deployment/customer-service-w08e1 -n staging
           echo " Application services are ready!"
 
       - name: Get Staging Environment URLs
@@ -273,26 +273,26 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Wait for manual testing
-        run: |
-          echo " Pausing for manual testing (5 minutes)..."
-          sleep 120 # Sleep for 1 minutes to allow manual testing
+      # - name: Wait for manual testing
+      #   run: |
+      #     echo " Pausing for manual testing (5 minutes)..."
+      #     sleep 120 # Sleep for 1 minutes to allow manual testing
 
-      - name: Cleanup Staging Environment
-        run: |
-          echo "CLEANING UP STAGING ENVIRONMENT"
+      # - name: Cleanup Staging Environment
+      #   run: |
+      #     echo "CLEANING UP STAGING ENVIRONMENT"
           
-          echo "Deleting all services in AKS..."
-          # Delete all services in all namespaces
-          kubectl delete svc --all --all-namespaces
+      #     echo "Deleting all services in AKS..."
+      #     # Delete all services in all namespaces
+      #     kubectl delete svc --all --all-namespaces
 
-          echo "Deleting all deployments in AKS..."
-          # Optional: delete all deployments if you also want to remove pods
-          kubectl delete deployment --all --all-namespaces
+      #     echo "Deleting all deployments in AKS..."
+      #     # Optional: delete all deployments if you also want to remove pods
+      #     kubectl delete deployment --all --all-namespaces
 
-          echo "Deleting all yaml in AKS..."
-          # Optional: delete all deployments if you also want to remove pods
-          kubectl delete -f k8s/ -n staging
+      #     echo "Deleting all yaml in AKS..."
+      #     # Optional: delete all deployments if you also want to remove pods
+      #     kubectl delete -f k8s/ -n staging
 
       - name: Logout from Azure
         run: az logout

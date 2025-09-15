@@ -13,13 +13,7 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend_ci.yml'
-  pull_request:
-    branches: # Runs on PRs targeting these branches
-      - main
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend_ci.yml'
+
 
 
       

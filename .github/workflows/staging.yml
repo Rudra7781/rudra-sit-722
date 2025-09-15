@@ -27,6 +27,9 @@ jobs:
       image-tag: latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Display Trigger Information
         run: |
           echo " Stage 2 Pipeline Triggered"

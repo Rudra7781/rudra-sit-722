@@ -94,117 +94,17 @@ jobs:
 
       - name: Create Kubernetes Namespace
         run: |
-          echo "🎯 Setting up staging namespace..."
+          echo " Setting up staging namespace..."
           kubectl create namespace staging --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy Database Services
+      - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
         run: |
-          echo "🗄️ Deploying database services..."
-          kubectl apply -f - <<EOF
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: product-db
-            namespace: staging
-            labels:
-              app: product-db
-              environment: staging
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: product-db
-            template:
-              metadata:
-                labels:
-                  app: product-db
-                  environment: staging
-              spec:
-                containers:
-                - name: postgres
-                  image: postgres:15
-                  env:
-                  - name: POSTGRES_USER
-                    value: postgres
-                  - name: POSTGRES_PASSWORD
-                    value: postgres
-                  - name: POSTGRES_DB
-                    value: products
-                  ports:
-                  - containerPort: 5432
-                  readinessProbe:
-                    exec:
-                      command:
-                        - pg_isready
-                        - -U
-                        - postgres
-                    initialDelaySeconds: 5
-                    periodSeconds: 10
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: product-db-service
-            namespace: staging
-          spec:
-            selector:
-              app: product-db
-            ports:
-            - port: 5432
-              targetPort: 5432
-          ---
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: order-db
-            namespace: staging
-            labels:
-              app: order-db
-              environment: staging
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: order-db
-            template:
-              metadata:
-                labels:
-                  app: order-db
-                  environment: staging
-              spec:
-                containers:
-                - name: postgres
-                  image: postgres:15
-                  env:
-                  - name: POSTGRES_USER
-                    value: postgres
-                  - name: POSTGRES_PASSWORD
-                    value: postgres
-                  - name: POSTGRES_DB
-                    value: orders
-                  ports:
-                  - containerPort: 5432
-                  readinessProbe:
-                    exec:
-                      command:
-                        - pg_isready
-                        - -U
-                        - postgres
-                    initialDelaySeconds: 5
-                    periodSeconds: 10
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: order-db-service
-            namespace: staging
-          spec:
-            selector:
-              app: order-db
-            ports:
-            - port: 5432
-              targetPort: 5432
-          EOF
+          echo "Deploying backend infrastructure..."
+          cd k8s/
+          kubectl apply -f configmaps.yaml
+          kubectl apply -f secrets.yaml
+          kubectl apply -f product-db.yaml
+          kubectl apply -f order-db.yaml
 
       - name: Wait for Databases to be Ready
         run: |
@@ -213,141 +113,20 @@ jobs:
           kubectl wait --for=condition=available --timeout=300s deployment/order-db -n staging
           echo "✅ Databases are ready!"
 
-      - name: Deploy Application Services
+      - name: Deploy Backend Microservices (Product, Order)
         run: |
-          echo " Deploying application services with image tag: latest"
-          kubectl apply -f - <<EOF
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: product-service
-            namespace: staging
-            labels:
-              app: product-service
-              environment: staging
-              version: "latest"
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: product-service
-            template:
-              metadata:
-                labels:
-                  app: product-service
-                  environment: staging
-              spec:
-                containers:
-                - name: product-service
-                  image: ${{ env.ACR_LOGIN_SERVER }}/product_service:latest
-                  env:
-                  - name: POSTGRES_HOST
-                    value: product-db-service
-                  - name: POSTGRES_PORT
-                    value: "5432"
-                  - name: POSTGRES_DB
-                    value: products
-                  - name: POSTGRES_USER
-                    value: postgres
-                  - name: POSTGRES_PASSWORD
-                    value: postgres
-                  ports:
-                  - containerPort: 8000
-                  readinessProbe:
-                    httpGet:
-                      path: /health
-                      port: 8000
-                    initialDelaySeconds: 30
-                    periodSeconds: 10
-                  livenessProbe:
-                    httpGet:
-                      path: /health
-                      port: 8000
-                    initialDelaySeconds: 45
-                    periodSeconds: 30
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: product-service
-            namespace: staging
-          spec:
-            selector:
-              app: product-service
-            ports:
-            - port: 8000
-              targetPort: 8000
-            type: LoadBalancer
-          ---
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: order-service
-            namespace: staging
-            labels:
-              app: order-service
-              environment: staging
-              version: "latest"
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                app: order-service
-            template:
-              metadata:
-                labels:
-                  app: order-service
-                  environment: staging
-              spec:
-                containers:
-                - name: order-service
-                  image: ${{ env.ACR_LOGIN_SERVER }}/order_service:latest
-                  env:
-                  - name: POSTGRES_HOST
-                    value: order-db-service
-                  - name: POSTGRES_PORT
-                    value: "5432"
-                  - name: POSTGRES_DB
-                    value: orders
-                  - name: POSTGRES_USER
-                    value: postgres
-                  - name: POSTGRES_PASSWORD
-                    value: postgres
-                  ports:
-                  - containerPort: 8001
-                  readinessProbe:
-                    httpGet:
-                      path: /health
-                      port: 8001
-                    initialDelaySeconds: 30
-                    periodSeconds: 10
-                  livenessProbe:
-                    httpGet:
-                      path: /health
-                      port: 8001
-                    initialDelaySeconds: 45
-                    periodSeconds: 30
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: order-service
-            namespace: staging
-          spec:
-            selector:
-              app: order-service
-            ports:
-            - port: 8001
-              targetPort: 8001
-            type: LoadBalancer
-          EOF
+          echo "Deploying backend microservices..."
+          cd k8s/
+          kubectl apply -f product-service.yaml
+          kubectl apply -f order-service.yaml
+
 
       - name: Wait for Application Services to be Ready
         run: |
-          echo "⏳ Waiting for application services to be ready..."
-          kubectl wait --for=condition=available --timeout=300s deployment/product-service -n staging
-          kubectl wait --for=condition=available --timeout=300s deployment/order-service -n staging
-          echo "✅ Application services are ready!"
+          echo " Waiting for application services to be ready..."
+          kubectl wait --for=condition=available --timeout=30s deployment/product-service -n staging
+          kubectl wait --for=condition=available --timeout=30s deployment/order-service -n staging
+          echo " Application services are ready!"
 
       - name: Get Staging Environment URLs
         run: |
@@ -356,7 +135,7 @@ jobs:
           
           # Wait for external IPs with timeout
           echo " Waiting for LoadBalancer external IPs..."
-          timeout 300 bash -c '
+          timeout 10 bash -c '
           while [[ $(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
             echo "Waiting for product-service external IP..."
             sleep 15

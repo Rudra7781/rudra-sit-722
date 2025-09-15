@@ -80,7 +80,7 @@ jobs:
         run: az logout
         if: always()
 
-  Job 2: Deploy Applications to Staging
+  #Job 2: Deploy Applications to Staging
   deploy_to_staging:
     runs-on: ubuntu-latest
     needs: create_staging_infrastructure

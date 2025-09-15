@@ -184,7 +184,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          enable-AzPSSession: true
+          # enable-AzPSSession: true
 
       - name: Get AKS Credentials
         run: |
@@ -202,7 +202,7 @@ jobs:
           
           echo "product_ip=$PRODUCT_SERVICE_IP" >> $GITHUB_OUTPUT
           echo "order_ip=$ORDER_SERVICE_IP" >> $GITHUB_OUTPUT
-          echo "order_ip=$CUSTOMER_SERVICE_IP" >> $GITHUB_OUTPUT
+          echo "customer_ip=$CUSTOMER_SERVICE_IP" >> $GITHUB_OUTPUT
           
           echo "Product Service IP: $PRODUCT_SERVICE_IP"
           echo "Order Service IP: $ORDER_SERVICE_IP"

@@ -43,253 +43,248 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Test k8s exists
+      - name: Create Staging Resource Group
         run: |
-          echo "Deploying backend infrastructure..."
-          pwd
-          ls 
-      # - name: Create Staging Resource Group
-      #   run: |
-      #     echo " Creating staging resource group..."
-      #     az group create \
-      #       --name ${{ env.STAGING_RG }} \
-      #       --location australiaeast \
-      #       --tags Environment=Staging Purpose=Testing AutoDelete=true
+          echo " Creating staging resource group..."
+          az group create \
+            --name ${{ env.STAGING_RG }} \
+            --location australiaeast \
+            --tags Environment=Staging Purpose=Testing AutoDelete=true
 
-      # - name: Create Staging AKS Cluster
-      #   run: |
-      #     echo " Creating staging AKS cluster..."
-      #     az aks create \
-      #       --resource-group ${{ env.STAGING_RG }} \
-      #       --name ${{ env.STAGING_AKS }} \
-      #       --node-count 1 \
-      #       --node-vm-size Standard_B2s \
-      #       --generate-ssh-keys \
-      #       --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
-      #       --tags Environment=Staging Purpose=Testing AutoDelete=true
+      - name: Create Staging AKS Cluster
+        run: |
+          echo " Creating staging AKS cluster..."
+          az aks create \
+            --resource-group ${{ env.STAGING_RG }} \
+            --name ${{ env.STAGING_AKS }} \
+            --node-count 1 \
+            --node-vm-size Standard_B2s \
+            --generate-ssh-keys \
+            --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }} \
+            --tags Environment=Staging Purpose=Testing AutoDelete=true
 
-      # - name: Get AKS Credentials
-      #   run: |
-      #     az aks get-credentials \
-      #       --resource-group ${{ env.STAGING_RG }} \
-      #       --name ${{ env.STAGING_AKS }} \
-      #       --overwrite-existing
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.STAGING_RG }} \
+            --name ${{ env.STAGING_AKS }} \
+            --overwrite-existing
 
-      # - name: Verify Cluster Connection
-      #   run: |
-      #     echo " Verifying cluster connectivity..."
-      #     kubectl get nodes
-      #     kubectl cluster-info
+      - name: Verify Cluster Connection
+        run: |
+          echo " Verifying cluster connectivity..."
+          kubectl get nodes
+          kubectl cluster-info
                     
       - name: Logout from Azure
         run: az logout
         if: always()
 
-  # Job 2: Deploy Applications to Staging
-  # deploy_to_staging:
-  #   runs-on: ubuntu-latest
-  #   needs: create_staging_infrastructure
-  #   if: success()
+  Job 2: Deploy Applications to Staging
+  deploy_to_staging:
+    runs-on: ubuntu-latest
+    needs: create_staging_infrastructure
+    if: success()
 
-  #   steps:
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Get AKS Credentials
-  #       run: |
-  #         az aks get-credentials \
-  #           --resource-group ${{ env.STAGING_RG }} \
-  #           --name ${{ env.STAGING_AKS }} \
-  #           --overwrite-existing
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.STAGING_RG }} \
+            --name ${{ env.STAGING_AKS }} \
+            --overwrite-existing
 
-  #     - name: Create Kubernetes Namespace
-  #       run: |
-  #         echo " Setting up staging namespace..."
-  #         kubectl create namespace staging --dry-run=client -o yaml | kubectl apply -f -
+      - name: Create Kubernetes Namespace
+        run: |
+          echo " Setting up staging namespace..."
+          kubectl create namespace staging --dry-run=client -o yaml | kubectl apply -f -
 
-  #     - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
-  #       run: |
-  #         echo "Deploying backend infrastructure..."
-  #         # cd k8s/
-  #         kubectl apply -f /k8s/configmaps.yaml
-  #         kubectl apply -f /k8s/secrets.yaml
-  #         kubectl apply -f /k8s/product-db.yaml
-  #         kubectl apply -f /k8s/order-db.yaml
-  #         kubectl apply -f /k8s/customer-db.yaml
+      - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
+        run: |
+          echo "Deploying backend infrastructure..."
+          # cd k8s/
+          kubectl apply -f /k8s/configmaps.yaml
+          kubectl apply -f /k8s/secrets.yaml
+          kubectl apply -f /k8s/product-db.yaml
+          kubectl apply -f /k8s/order-db.yaml
+          kubectl apply -f /k8s/customer-db.yaml
         
-  #     - name: Wait for Databases to be Ready
-  #       run: |
-  #         echo "⏳ Waiting for databases to be ready..."
-  #         kubectl wait --for=condition=available --timeout=300s deployment/product-db -n staging
-  #         kubectl wait --for=condition=available --timeout=300s deployment/order-db -n staging
-  #         echo "✅ Databases are ready!"
+      - name: Wait for Databases to be Ready
+        run: |
+          echo " Waiting for databases to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment/product-db -n staging
+          kubectl wait --for=condition=available --timeout=300s deployment/order-db -n staging
+          echo " Databases are ready!"
 
-  #     - name: Deploy Backend Microservices (Product, Order)
-  #       run: |
-  #         echo "Deploying backend microservices..."
-  #         #cd k8s/
-  #         kubectl apply -f /k8s/product-service.yaml
-  #         kubectl apply -f /k8s/order-service.yaml
-  #         kubectl apply -f /k8s/customer-service.yaml
+      - name: Deploy Backend Microservices (Product, Order)
+        run: |
+          echo "Deploying backend microservices..."
+          #cd k8s/
+          kubectl apply -f /k8s/product-service.yaml
+          kubectl apply -f /k8s/order-service.yaml
+          kubectl apply -f /k8s/customer-service.yaml
 
 
-  #     - name: Wait for Application Services to be Ready
-  #       run: |
-  #         echo " Waiting for application services to be ready..."
-  #         kubectl wait --for=condition=available --timeout=30s deployment/product-service -n staging
-  #         kubectl wait --for=condition=available --timeout=30s deployment/order-service -n staging
-  #         echo " Application services are ready!"
+      - name: Wait for Application Services to be Ready
+        run: |
+          echo " Waiting for application services to be ready..."
+          kubectl wait --for=condition=available --timeout=30s deployment/product-service -n staging
+          kubectl wait --for=condition=available --timeout=30s deployment/order-service -n staging
+          echo " Application services are ready!"
 
-  #     - name: Get Staging Environment URLs
-  #       run: |
-  #         echo " Retrieving staging environment URLs..."
-  #         kubectl get services -n staging
+      - name: Get Staging Environment URLs
+        run: |
+          echo " Retrieving staging environment URLs..."
+          kubectl get services -n staging
           
-  #         # Wait for external IPs with timeout
-  #         echo " Waiting for LoadBalancer external IPs..."
-  #         timeout 10 bash -c '
-  #         while [[ $(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
-  #           echo "Waiting for product-service external IP..."
-  #           sleep 15
-  #         done
-  #         while [[ $(kubectl get svc order-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
-  #           echo "Waiting for order-service external IP..."
-  #           sleep 15
-  #         done
-  #         ' || echo "  LoadBalancer IPs may take additional time to provision"
+          # Wait for external IPs with timeout
+          echo " Waiting for LoadBalancer external IPs..."
+          timeout 10 bash -c '
+          while [[ $(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
+            echo "Waiting for product-service external IP..."
+            sleep 15
+          done
+          while [[ $(kubectl get svc order-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
+            echo "Waiting for order-service external IP..."
+            sleep 15
+          done
+          ' || echo "  LoadBalancer IPs may take additional time to provision"
           
-  #         PRODUCT_SERVICE_IP=$(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "pending")
-  #         ORDER_SERVICE_IP=$(kubectl get svc order-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "pending")
+          PRODUCT_SERVICE_IP=$(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "pending")
+          ORDER_SERVICE_IP=$(kubectl get svc order-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "pending")
           
     
-  #         echo " STAGING ENVIRONMENT DEPLOYED SUCCESSFULLY!"
+          echo " STAGING ENVIRONMENT DEPLOYED SUCCESSFULLY!"
                      
-  #     - name: Logout from Azure
-  #       run: az logout
-  #       if: always()
+      - name: Logout from Azure
+        run: az logout
+        if: always()
 
-  # # Job 3: Run Staging Tests
-  # run_staging_tests:
-  #   runs-on: ubuntu-latest
-  #   needs: deploy_to_staging
-  #   if: success()
+  # Job 3: Run Staging Tests
+  run_staging_tests:
+    runs-on: ubuntu-latest
+    needs: deploy_to_staging
+    if: success()
 
-  #   steps:
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
-  #         enable-AzPSSession: true
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
 
-  #     - name: Get AKS Credentials
-  #       run: |
-  #         az aks get-credentials \
-  #           --resource-group ${{ env.STAGING_RG }} \
-  #           --name ${{ env.STAGING_AKS }} \
-  #           --overwrite-existing
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.STAGING_RG }} \
+            --name ${{ env.STAGING_AKS }} \
+            --overwrite-existing
 
-  #     - name: Wait for Services to be Fully Ready
-  #       run: |
-  #         echo " Ensuring all services are fully operational..."
-  #         sleep 60  # Give services additional time to fully initialize
+      - name: Wait for Services to be Fully Ready
+        run: |
+          echo " Ensuring all services are fully operational..."
+          sleep 60  # Give services additional time to fully initialize
 
-  #     - name: Get Service IPs
-  #       id: get_ips
-  #       run: |
-  #         PRODUCT_SERVICE_IP=$(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
-  #         ORDER_SERVICE_IP=$(kubectl get svc order-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+      - name: Get Service IPs
+        id: get_ips
+        run: |
+          PRODUCT_SERVICE_IP=$(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+          ORDER_SERVICE_IP=$(kubectl get svc order-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
           
-  #         echo "product_ip=$PRODUCT_SERVICE_IP" >> $GITHUB_OUTPUT
-  #         echo "order_ip=$ORDER_SERVICE_IP" >> $GITHUB_OUTPUT
+          echo "product_ip=$PRODUCT_SERVICE_IP" >> $GITHUB_OUTPUT
+          echo "order_ip=$ORDER_SERVICE_IP" >> $GITHUB_OUTPUT
           
-  #         echo "Product Service IP: $PRODUCT_SERVICE_IP"
-  #         echo "Order Service IP: $ORDER_SERVICE_IP"
+          echo "Product Service IP: $PRODUCT_SERVICE_IP"
+          echo "Order Service IP: $ORDER_SERVICE_IP"
 
-  #     - name: Run Basic Health Checks
-  #       run: |
-  #         echo " Running health checks..."
+      - name: Run Basic Health Checks
+        run: |
+          echo " Running health checks..."
           
-  #         # Product Service Health Check
-  #         echo "Testing Product Service Health..."
-  #         for i in {1..5}; do
-  #           if curl -f -s http://${{ steps.get_ips.outputs.product_ip }}:8000/health; then
-  #             echo " Product Service health check passed"
-  #             break
-  #           else
-  #             echo " Product Service not ready yet (attempt $i/5)"
-  #             sleep 30
-  #           fi
-  #         done
+          # Product Service Health Check
+          echo "Testing Product Service Health..."
+          for i in {1..5}; do
+            if curl -f -s http://${{ steps.get_ips.outputs.product_ip }}:8000/health; then
+              echo " Product Service health check passed"
+              break
+            else
+              echo " Product Service not ready yet (attempt $i/5)"
+              sleep 30
+            fi
+          done
           
-  #         # Order Service Health Check  
-  #         echo "Testing Order Service Health..."
-  #         for i in {1..5}; do
-  #           if curl -f -s http://${{ steps.get_ips.outputs.order_ip }}:8001/health; then
-  #             echo " Order Service health check passed"
-  #             break
-  #           else
-  #             echo " Order Service not ready yet (attempt $i/5)"
-  #             sleep 30
-  #           fi
-  #         done
+          # Order Service Health Check  
+          echo "Testing Order Service Health..."
+          for i in {1..5}; do
+            if curl -f -s http://${{ steps.get_ips.outputs.order_ip }}:8001/health; then
+              echo " Order Service health check passed"
+              break
+            else
+              echo " Order Service not ready yet (attempt $i/5)"
+              sleep 30
+            fi
+          done
 
-  #     - name: Run Simple Acceptance Tests
-  #       run: |
-  #         echo " Running acceptance tests..."
+      - name: Run Simple Acceptance Tests
+        run: |
+          echo " Running acceptance tests..."
           
-  #         PRODUCT_IP=${{ steps.get_ips.outputs.product_ip }}
-  #         ORDER_IP=${{ steps.get_ips.outputs.order_ip }}
+          PRODUCT_IP=${{ steps.get_ips.outputs.product_ip }}
+          ORDER_IP=${{ steps.get_ips.outputs.order_ip }}
           
-  #         # Test Product Service API endpoints
-  #         echo "Testing Product Service APIs..."
+          # Test Product Service API endpoints
+          echo "Testing Product Service APIs..."
           
-  #         # Get products (should return empty list initially)
-  #         echo "  - Testing GET /products"
-  #         curl -f -s "http://$PRODUCT_IP:8000/products" || exit 1
+          # Get products (should return empty list initially)
+          echo "  - Testing GET /products"
+          curl -f -s "http://$PRODUCT_IP:8000/products" || exit 1
           
-  #         # Test Order Service API endpoints
-  #         echo "Testing Order Service APIs..."
+          # Test Order Service API endpoints
+          echo "Testing Order Service APIs..."
           
-  #         # Get orders (should return empty list initially)
-  #         echo "  - Testing GET /orders"  
-  #         curl -f -s "http://$ORDER_IP:8001/orders" || exit 1
+          # Get orders (should return empty list initially)
+          echo "  - Testing GET /orders"  
+          curl -f -s "http://$ORDER_IP:8001/orders" || exit 1
           
-  #         echo " All acceptance tests passed!"
+          echo " All acceptance tests passed!"
 
                       
-      # - name: Logout from Azure
-      #   run: az logout
-      #   if: always()
+      - name: Logout from Azure
+        run: az logout
+        if: always()
 
   
-  # # Job 4: Destroy Staging Environment
-  # destroy_staging_environment:
-  #   runs-on: ubuntu-latest
-  #   needs: [create_staging_infrastructure, deploy_to_staging, run_staging_tests]
-  #   if: always() && needs.create_staging_infrastructure.result == 'success'
+  # Job 4: Destroy Staging Environment
+  destroy_staging_environment:
+    runs-on: ubuntu-latest
+    needs: [create_staging_infrastructure, deploy_to_staging, run_staging_tests]
+    if: always() && needs.create_staging_infrastructure.result == 'success'
 
-  #   steps:
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Cleanup Staging Environment
-  #       run: |
-  #         echo "CLEANING UP STAGING ENVIRONMENT"
+      - name: Cleanup Staging Environment
+        run: |
+          echo "CLEANING UP STAGING ENVIRONMENT"
           
-  #             echo "Deleting staging AKS cluster..."
-  #             az aks delete \
-  #               --name ${{ env.STAGING_AKS }} \
-  #               --resource-group week10rudra-rg \
-  #               --yes \
-  #               --no-wait
+              echo "Deleting staging AKS cluster..."
+              az aks delete \
+                --name ${{ env.STAGING_AKS }} \
+                --resource-group week10rudra-rg \
+                --yes \
+                --no-wait
                     
-      # - name: Logout from Azure
-      #   run: az logout
-      #   if: always()
+      - name: Logout from Azure
+        run: az logout
+        if: always()
             
          
   

@@ -29,8 +29,8 @@ env:
   # Use image tag from Stage 1 trigger or manual input
   IMAGE_TAG: ${{ github.event.client_payload.image_tag || github.event.inputs.image_tag || 'latest' }}
   # Create unique production environment names
-  STAGING_RG: week10rudra-rg
-  STAGING_AKS: week10rudra-aks
+  PRODUCTION_RG: week10rudra-rg
+  PRODUCTION_AKS: week10rudra-aks
 
 jobs:
 
@@ -42,8 +42,8 @@ jobs:
       PRODUCT_API_IP: ${{ steps.get_product_ip.outputs.external_ip }}
       ORDER_API_IP: ${{ steps.get_order_ip.outputs.external_ip }}
       CUSTOMER_API_IP: ${{ steps.get_customer_ip.outputs.external_ip }}
-      staging-rg: ${{ env.STAGING_RG }}
-      staging-aks: ${{ env.STAGING_AKS }}
+      production-rg: ${{ env.PRODUCTION_RG }}
+      production-aks: ${{ env.PRODUCTION_AKS }}
 
     steps:
       - name: Checkout repository
@@ -86,6 +86,7 @@ jobs:
           echo "Waiting for Product, Order LoadBalancer IPs to be assigned (up to 5 minutes)..."
           PRODUCT_IP=""
           ORDER_IP=""
+          CUSTOMER_IP=""
           
           for i in $(seq 1 60); do
             echo "Attempt $i/60 to get IPs..."
@@ -133,8 +134,8 @@ jobs:
     needs: [deploy_to_production]
     uses: ./.github/workflows/frontend-cd.yml
     with:
-      aks_cluster_name: ${{ needs.deploy_to_production.outputs.staging-aks }}
-      aks_resource_group: ${{ needs.deploy_to_production.outputs.staging-rg }}
+      aks_cluster_name: ${{ needs.deploy_to_production.outputs.production-aks }}
+      aks_resource_group: ${{ needs.deploy_to_production.outputs.production-rg }}
       product_api_ip: ${{ needs.deploy_to_production.outputs.product_api_ip }}
       order_api_ip: ${{ needs.deploy_to_production.outputs.order_api_ip }}
       customer_api_ip: ${{ needs.deploy_to_production.outputs.customer_api_ip }}

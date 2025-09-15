@@ -44,7 +44,7 @@ jobs:
         run: |
           echo "Deploying backend infrastructure..."
           pwd
-          ls -la
+          ls 
       # - name: Create Staging Resource Group
       #   run: |
       #     echo " Creating staging resource group..."

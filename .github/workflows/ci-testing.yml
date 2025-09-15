@@ -80,6 +80,7 @@ jobs:
                   # Loop through each backend service folder
                   for req in backend/*/requirements.txt; do
                     echo "Installing $req"
+                    pwd
                     pip install -r "$req"
                   done
                   # Install CI tools
@@ -169,7 +170,7 @@ jobs:
               run: az logout
               if: always()
 
-    staging_deployment:
-        needs: [Test_Backend_Services, Build_and_Push_Docker_Images_to_ACR]
-        uses: ./.github/workflows/staging.yml
-        secrets: inherit
+    # staging_deployment:
+    #     needs: [Test_Backend_Services, Build_and_Push_Docker_Images_to_ACR]
+    #     uses: ./.github/workflows/staging.yml
+    #     secrets: inherit

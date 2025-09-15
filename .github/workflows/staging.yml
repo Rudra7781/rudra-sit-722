@@ -111,7 +111,7 @@ jobs:
           kubectl apply -f secrets.yaml -n staging
           kubectl apply -f product-db.yaml -n staging
           kubectl apply -f order-db.yaml -n staging
-          kubectl apply -f customer-db.yam -n staging
+          kubectl apply -f customer-db.yaml -n staging
         
       - name: Wait for Databases to be Ready
         run: |

@@ -1,4 +1,4 @@
-name: Stage 1 : CI Pipeline - Testing Branch
+name: Stage 1 - CI Pipeline & Testing Branch
 
 on:
     # Trigger the workflow on pushes and pull requests to the 'testing' branch

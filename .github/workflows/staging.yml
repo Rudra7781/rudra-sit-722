@@ -80,6 +80,10 @@ jobs:
     if: success()
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+        
       - name: Azure Login
         uses: azure/login@v1
         with:

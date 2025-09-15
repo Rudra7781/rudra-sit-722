@@ -167,12 +167,11 @@ jobs:
               run: az logout
               if: always()
 
-    # deploy_backend:
-    #     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
-    #     needs: [test_and_lint_backends, build_and_push_images]
-    #     uses: ./.github/workflows/backend-cd.yml
-    #     with:
-    #         aks_cluster_name: "rudra2306week09-aks"
-    #         aks_resource_group: "rudra2306week09-rg"
-    #         aks_acr_name: "rudra2306week09acr"
-    #     secrets: inherit
+    staging_deployment:
+        needs: [Test_Backend_Services, Build_and_Push_Docker_Images_to_ACR]
+        uses: ./.github/workflows/staging.yml
+        with:
+            aks_cluster_name: "week10rudra-aks"
+            aks_resource_group: "week10rudra-rg"
+            aks_acr_name: "week10rudraacr"
+        secrets: inherit

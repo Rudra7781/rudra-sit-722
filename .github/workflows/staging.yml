@@ -29,13 +29,13 @@ jobs:
     outputs:
       staging-rg: ${{ env.STAGING_RG }}
       staging-aks: ${{ env.STAGING_AKS }}
-      image-tag: ${{ env.IMAGE_TAG }}
+      image-tag: latest
 
     steps:
       - name: Display Trigger Information
         run: |
-          echo "🚀 Stage 2 Pipeline Triggered"
-          echo "Image Tag: ${{ env.IMAGE_TAG }}"
+          echo " Stage 2 Pipeline Triggered"
+          echo "Image Tag: latest"
           echo "Staging Resource Group: ${{ env.STAGING_RG }}"
           echo "Staging AKS Cluster: ${{ env.STAGING_AKS }}"
           if [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
@@ -52,7 +52,7 @@ jobs:
 
       - name: Create Staging Resource Group
         run: |
-          echo "📦 Creating staging resource group..."
+          echo " Creating staging resource group..."
           az group create \
             --name ${{ env.STAGING_RG }} \
             --location australiaeast \
@@ -60,7 +60,7 @@ jobs:
 
       - name: Create Staging AKS Cluster
         run: |
-          echo "🔧 Creating staging AKS cluster..."
+          echo " Creating staging AKS cluster..."
           az aks create \
             --resource-group ${{ env.STAGING_RG }} \
             --name ${{ env.STAGING_AKS }} \
@@ -79,7 +79,7 @@ jobs:
 
       - name: Verify Cluster Connection
         run: |
-          echo "✅ Verifying cluster connectivity..."
+          echo " Verifying cluster connectivity..."
           kubectl get nodes
           kubectl cluster-info
 
@@ -225,7 +225,7 @@ jobs:
 
       - name: Deploy Application Services
         run: |
-          echo "🚀 Deploying application services with image tag: ${{ env.IMAGE_TAG }}"
+          echo " Deploying application services with image tag: latest"
           kubectl apply -f - <<EOF
           apiVersion: apps/v1
           kind: Deployment
@@ -235,7 +235,7 @@ jobs:
             labels:
               app: product-service
               environment: staging
-              version: "${{ env.IMAGE_TAG }}"
+              version: "latest"
           spec:
             replicas: 1
             selector:
@@ -249,7 +249,7 @@ jobs:
               spec:
                 containers:
                 - name: product-service
-                  image: ${{ env.ACR_LOGIN_SERVER }}/product_service:${{ env.IMAGE_TAG }}
+                  image: ${{ env.ACR_LOGIN_SERVER }}/product_service:latest
                   env:
                   - name: POSTGRES_HOST
                     value: product-db-service
@@ -297,7 +297,7 @@ jobs:
             labels:
               app: order-service
               environment: staging
-              version: "${{ env.IMAGE_TAG }}"
+              version: "latest"
           spec:
             replicas: 1
             selector:
@@ -311,7 +311,7 @@ jobs:
               spec:
                 containers:
                 - name: order-service
-                  image: ${{ env.ACR_LOGIN_SERVER }}/order_service:${{ env.IMAGE_TAG }}
+                  image: ${{ env.ACR_LOGIN_SERVER }}/order_service:latest
                   env:
                   - name: POSTGRES_HOST
                     value: order-db-service
@@ -361,11 +361,11 @@ jobs:
 
       - name: Get Staging Environment URLs
         run: |
-          echo "🌐 Retrieving staging environment URLs..."
+          echo " Retrieving staging environment URLs..."
           kubectl get services -n staging
           
           # Wait for external IPs with timeout
-          echo "⏳ Waiting for LoadBalancer external IPs..."
+          echo " Waiting for LoadBalancer external IPs..."
           timeout 300 bash -c '
           while [[ $(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null) == "" ]]; do
             echo "Waiting for product-service external IP..."
@@ -375,29 +375,14 @@ jobs:
             echo "Waiting for order-service external IP..."
             sleep 15
           done
-          ' || echo "⚠️  LoadBalancer IPs may take additional time to provision"
+          ' || echo "  LoadBalancer IPs may take additional time to provision"
           
           PRODUCT_SERVICE_IP=$(kubectl get svc product-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "pending")
           ORDER_SERVICE_IP=$(kubectl get svc order-service -n staging -o jsonpath="{.status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "pending")
           
-          echo ""
-          echo "🎉 STAGING ENVIRONMENT DEPLOYED SUCCESSFULLY!"
-          echo "================================================"
-          echo "🏷️  Image Version: ${{ env.IMAGE_TAG }}"
-          echo "🌍 Environment: ${{ env.STAGING_RG }}"
-          echo ""
-          echo "📱 Service URLs:"
-          echo "   Product Service: http://$PRODUCT_SERVICE_IP:8000"
-          echo "   Order Service: http://$ORDER_SERVICE_IP:8001"
-          echo ""
-          echo "🔍 Health Check URLs:"
-          echo "   Product Health: http://$PRODUCT_SERVICE_IP:8000/health"
-          echo "   Order Health: http://$ORDER_SERVICE_IP:8001/health"
-          echo ""
-          echo "📊 API Documentation:"
-          echo "   Product API: http://$PRODUCT_SERVICE_IP:8000/docs"
-          echo "   Order API: http://$ORDER_SERVICE_IP:8001/docs"
-          echo "================================================"
+    
+          echo " STAGING ENVIRONMENT DEPLOYED SUCCESSFULLY!"
+ 
 
   # Job 3: Run Staging Tests
   run_staging_tests:
@@ -410,6 +395,7 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
 
       - name: Get AKS Credentials
         run: |
@@ -420,7 +406,7 @@ jobs:
 
       - name: Wait for Services to be Fully Ready
         run: |
-          echo "⏳ Ensuring all services are fully operational..."
+          echo " Ensuring all services are fully operational..."
           sleep 60  # Give services additional time to fully initialize
 
       - name: Get Service IPs
@@ -437,16 +423,16 @@ jobs:
 
       - name: Run Basic Health Checks
         run: |
-          echo "🏥 Running health checks..."
+          echo " Running health checks..."
           
           # Product Service Health Check
           echo "Testing Product Service Health..."
           for i in {1..5}; do
             if curl -f -s http://${{ steps.get_ips.outputs.product_ip }}:8000/health; then
-              echo "✅ Product Service health check passed"
+              echo " Product Service health check passed"
               break
             else
-              echo "⏳ Product Service not ready yet (attempt $i/5)"
+              echo " Product Service not ready yet (attempt $i/5)"
               sleep 30
             fi
           done
@@ -455,17 +441,17 @@ jobs:
           echo "Testing Order Service Health..."
           for i in {1..5}; do
             if curl -f -s http://${{ steps.get_ips.outputs.order_ip }}:8001/health; then
-              echo "✅ Order Service health check passed"
+              echo " Order Service health check passed"
               break
             else
-              echo "⏳ Order Service not ready yet (attempt $i/5)"
+              echo " Order Service not ready yet (attempt $i/5)"
               sleep 30
             fi
           done
 
       - name: Run Simple Acceptance Tests
         run: |
-          echo "🧪 Running acceptance tests..."
+          echo " Running acceptance tests..."
           
           PRODUCT_IP=${{ steps.get_ips.outputs.product_ip }}
           ORDER_IP=${{ steps.get_ips.outputs.order_ip }}
@@ -484,38 +470,9 @@ jobs:
           echo "  - Testing GET /orders"  
           curl -f -s "http://$ORDER_IP:8001/orders" || exit 1
           
-          echo "✅ All acceptance tests passed!"
+          echo " All acceptance tests passed!"
 
-      - name: Manual Testing Phase
-        run: |
-          echo ""
-          echo "🔍 MANUAL TESTING PHASE"
-          echo "=================================="
-          echo "The staging environment is now ready for manual testing."
-          echo ""
-          echo "🌐 Access URLs:"
-          echo "   Product Service: http://${{ steps.get_ips.outputs.product_ip }}:8000"
-          echo "   Order Service: http://${{ steps.get_ips.outputs.order_ip }}:8001"
-          echo ""
-          echo "📖 API Documentation:"
-          echo "   Product API Docs: http://${{ steps.get_ips.outputs.product_ip }}:8000/docs"
-          echo "   Order API Docs: http://${{ steps.get_ips.outputs.order_ip }}:8001/docs"
-          echo ""
-          echo "⚠️  IMPORTANT: This environment will be automatically destroyed"
-          echo "    after the testing phase completes."
-          echo ""
-          echo "📋 Manual Testing Checklist:"
-          echo "   □ Test product creation and retrieval"
-          echo "   □ Test order creation and retrieval"
-          echo "   □ Verify API documentation is accessible"
-          echo "   □ Check application performance and responsiveness"
-          echo ""
-          echo "⏱️  Environment will remain active for additional testing..."
-          
-          # Keep environment active for manual testing
-          echo "Staging environment active for manual testing..."
-          sleep 300  # 5 minutes for manual testing
-
+  
   # Job 4: Destroy Staging Environment
   destroy_staging_environment:
     runs-on: ubuntu-latest
@@ -530,40 +487,19 @@ jobs:
 
       - name: Cleanup Staging Environment
         run: |
-          echo "🧹 CLEANING UP STAGING ENVIRONMENT"
-          echo "=================================="
-          echo "Resource Group: ${{ env.STAGING_RG }}"
-          echo ""
+          echo "CLEANING UP STAGING ENVIRONMENT"
           
           # Check if resource group exists before attempting deletion
           if az group exists --name ${{ env.STAGING_RG }}; then
-            echo "🗑️  Deleting staging resource group and all resources..."
+            echo " Deleting staging resource group and all resources..."
             az group delete \
               --name ${{ env.STAGING_RG }} \
               --yes \
               --no-wait
             
-            echo "✅ Staging environment cleanup initiated successfully"
-            echo ""
-            echo "📝 Cleanup Summary:"
-            echo "   - Resource Group: ${{ env.STAGING_RG }} (deletion in progress)"
-            echo "   - AKS Cluster: ${{ env.STAGING_AKS }} (being deleted)"
-            echo "   - All associated resources will be removed automatically"
-            echo ""
-            echo "💡 The deletion process runs asynchronously and may take several minutes to complete."
+            echo " The deletion process runs asynchronously and may take several minutes to complete."
           else
             echo "⚠️  Resource group ${{ env.STAGING_RG }} not found. May have been deleted already."
           fi
 
-      - name: Deployment Summary
-        run: |
-          echo ""
-          echo "📊 STAGE 2 DEPLOYMENT SUMMARY"
-          echo "============================="
-          echo "✅ Staging infrastructure created successfully"
-          echo "✅ Applications deployed with image tag: ${{ env.IMAGE_TAG }}"
-          echo "✅ Health checks and acceptance tests completed"
-          echo "✅ Manual testing phase completed"
-          echo "✅ Environment cleanup initiated"
-          echo ""
-          echo "🎉 Stage 2 pipeline completed successfully!"
+  

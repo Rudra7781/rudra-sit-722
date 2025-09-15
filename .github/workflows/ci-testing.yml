@@ -84,7 +84,7 @@ jobs:
                   done
                   # Install CI tools
                   pip install pytest httpx
-                  echo ${{ secrets.AZURE_CREDENTIALS }}
+                  
 
             # - name: Run product_service tests
             #   working-directory: backend/product_service

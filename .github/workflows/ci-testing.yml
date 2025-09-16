@@ -1,11 +1,12 @@
 name: Stage 1 - CI Pipeline & Testing Branch
 
 on:
-    # Trigger the workflow on pushes and pull requests to the 'testing' branch
+    # Trigger the workflow on pushes and pull requests to the 'testing'  branch
     push:
         branches: [testing]
     pull_request:
-        branches: [testing]
+        branches: [main, testing]
+        types: [opened, synchronize, reopened]
 
 # Define global environment variables that can be used across jobs
 env:
@@ -112,16 +113,16 @@ jobs:
             #       pytest tests --maxfail=1 --disable-warnings -q
 
 
-            # - name: Run customer_service tests
-            #   working-directory: backend/customer_service
-            #   env:
-            #       POSTGRES_HOST: localhost
-            #       POSTGRES_PORT: 5434
-            #       POSTGRES_DB: customers
-            #       POSTGRES_USER: postgres
-            #       POSTGRES_PASSWORD: postgres
-            #   run: |
-            #       pytest tests --maxfail=1 --disable-warnings -q
+            - name: Run customer_service tests
+              working-directory: backend/customer_service
+              env:
+                  POSTGRES_HOST: localhost
+                  POSTGRES_PORT: 5434
+                  POSTGRES_DB: customers
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+              run: |
+                  pytest tests --maxfail=1 --disable-warnings -q
 
     Build_and_Push_Docker_Images_to_ACR:
  
@@ -142,13 +143,6 @@ jobs:
             - name: Login to Azure Container Registry
               run: az acr login --name ${{ env.ACR_LOGIN_SERVER }}
               
-
-            # Build and Push Docker image for Frontend
-            # - name: Build and Push Frontend Image
-            #   run: |
-            #     docker build -t ${{ env.ACR_LOGIN_SERVER }}/frontend:latest ./frontend/
-            #     docker push ${{ env.ACR_LOGIN_SERVER }}/frontend:latest
-
             # # Build and Push Docker image for Product Service
             # - name: Build and Push Product Service Image
             #   run: |

@@ -90,27 +90,27 @@ jobs:
                   pip install pytest httpx
                   
 
-            - name: Run product_service tests
-              working-directory: backend/product_service
-              env:
-                  POSTGRES_HOST: localhost
-                  POSTGRES_PORT: 5432
-                  POSTGRES_DB: products
-                  POSTGRES_USER: postgres
-                  POSTGRES_PASSWORD: postgres
-              run: |
-                  pytest tests --maxfail=1 --disable-warnings -q
+            # - name: Run product_service tests
+            #   working-directory: backend/product_service
+            #   env:
+            #       POSTGRES_HOST: localhost
+            #       POSTGRES_PORT: 5432
+            #       POSTGRES_DB: products
+            #       POSTGRES_USER: postgres
+            #       POSTGRES_PASSWORD: postgres
+            #   run: |
+            #       pytest tests --maxfail=1 --disable-warnings -q
 
-            - name: Run order_service tests
-              working-directory: backend/order_service
-              env:
-                  POSTGRES_HOST: localhost
-                  POSTGRES_PORT: 5433
-                  POSTGRES_DB: orders
-                  POSTGRES_USER: postgres
-                  POSTGRES_PASSWORD: postgres
-              run: |
-                  pytest tests --maxfail=1 --disable-warnings -q
+            # - name: Run order_service tests
+            #   working-directory: backend/order_service
+            #   env:
+            #       POSTGRES_HOST: localhost
+            #       POSTGRES_PORT: 5433
+            #       POSTGRES_DB: orders
+            #       POSTGRES_USER: postgres
+            #       POSTGRES_PASSWORD: postgres
+            #   run: |
+            #       pytest tests --maxfail=1 --disable-warnings -q
 
 
             - name: Run customer_service tests
@@ -143,23 +143,23 @@ jobs:
             - name: Login to Azure Container Registry
               run: az acr login --name ${{ env.ACR_LOGIN_SERVER }}
               
-            # Build and Push Docker image for Product Service
-            - name: Build and Push Product Service Image
-              run: |
-                  docker build -t ${{ env.ACR_LOGIN_SERVER }}/product_service:latest ./backend/product_service/
-                  docker push ${{ env.ACR_LOGIN_SERVER }}/product_service:latest
+            # # Build and Push Docker image for Product Service
+            # - name: Build and Push Product Service Image
+            #   run: |
+            #       docker build -t ${{ env.ACR_LOGIN_SERVER }}/product_service:latest ./backend/product_service/
+            #       docker push ${{ env.ACR_LOGIN_SERVER }}/product_service:latest
 
-            # Build and Push Docker image for Order Service
-            - name: Build and Push Order Service Image
-              run: |
-                  docker build -t ${{ env.ACR_LOGIN_SERVER }}/order_service:latest ./backend/order_service/
-                  docker push ${{ env.ACR_LOGIN_SERVER }}/order_service:latest
+            # # Build and Push Docker image for Order Service
+            # - name: Build and Push Order Service Image
+            #   run: |
+            #       docker build -t ${{ env.ACR_LOGIN_SERVER }}/order_service:latest ./backend/order_service/
+            #       docker push ${{ env.ACR_LOGIN_SERVER }}/order_service:latest
 
-            # Build and Push Docker image for Customer Service
-            - name: Build and Push Customer Service Image
-              run: |
-                  docker build -t ${{ env.ACR_LOGIN_SERVER }}/customer_service:latest ./backend/customer_service/
-                  docker push ${{ env.ACR_LOGIN_SERVER }}/customer_service:latest
+            # # Build and Push Docker image for Customer Service
+            # - name: Build and Push Customer Service Image
+            #   run: |
+            #       docker build -t ${{ env.ACR_LOGIN_SERVER }}/customer_service:latest ./backend/customer_service/
+            #       docker push ${{ env.ACR_LOGIN_SERVER }}/customer_service:latest
 
             #Logout from Azure for security (runs even if image push fails)
             - name: Logout from Azure

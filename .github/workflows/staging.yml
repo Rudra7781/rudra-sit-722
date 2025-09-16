@@ -290,13 +290,25 @@ jobs:
           echo " Pausing for manual testing (1 minutes)..."
           sleep 60 # Sleep for 1 minutes to allow manual testing
 
-      - name: Cleanup Staging Environment
+      - name: Delete Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
         run: |
-          echo "CLEANING UP STAGING ENVIRONMENT"
+          echo "Deleting backend infrastructure..."
+          cd k8s/
+          kubectl delete -f configmaps.yaml -n staging
+          kubectl delete -f secrets.yaml -n staging
+          kubectl delete -f product-db.yaml -n staging
+          kubectl delete -f order-db.yaml -n staging
+          kubectl delete -f customer-db.yaml -n staging
+      
 
-          echo "Deleting all Services/Deployment in staging AKS..."
-          # Optional: delete all deployments if you also want to remove pods
-          kubectl delete -f k8s/ -n staging
+      - name: Delete Backend Microservices (Product, Order)
+        run: |
+          echo "Deleting backend microservices..."
+          cd k8s/
+          kubectl delete -f product-service.yaml -n staging
+          kubectl delete -f order-service.yaml -n staging
+          kubectl delete -f customer-service.yaml -n staging
+
 
       - name: Logout from Azure
         run: az logout

@@ -127,3 +127,4 @@ jobs:
       product_api_ip: ${{ needs.deploy_to_production.outputs.product_api_ip }}
       order_api_ip: ${{ needs.deploy_to_production.outputs.order_api_ip }}
       customer_api_ip: ${{ needs.deploy_to_production.outputs.customer_api_ip }}
+    secrets: inherit

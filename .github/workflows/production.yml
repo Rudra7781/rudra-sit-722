@@ -47,9 +47,9 @@ jobs:
         run: |
           az aks get-credentials --resource-group ${{ env.PRODUCTION_RG }} --name ${{ env.PRODUCTION_AKS }} --overwrite-existing
 
-      - name: Attach ACR
-        run: |
-          az aks update --name ${{ env.PRODUCTION_AKS }} --resource-group ${{ env.PRODUCTION_RG }} --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+      # - name: Attach ACR
+      #   run: |
+      #     az aks update --name ${{ env.PRODUCTION_AKS }} --resource-group ${{ env.PRODUCTION_RG }} --attach-acr ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
       - name: Deploy Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
         run: |

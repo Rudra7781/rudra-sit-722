@@ -97,7 +97,7 @@ jobs:
                   # Ensure frontend-service.yaml is configured with your ACR
                   kubectl apply -f frontend.yaml
 
-                  kubectl rollout restart deployment/frontend-deployment
+                  kubectl rollout restart deployment/frontend
 
 
             - name: Logout from Azure (AKS deployment)

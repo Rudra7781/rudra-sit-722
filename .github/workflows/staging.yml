@@ -15,7 +15,7 @@ env:
   # Create unique staging environment names
   STAGING_RG: week10rudra-rg
   # STAGING_AKS: aks-staging-${{ github.event.client_payload.run_id || github.run_id }}
-  STAGING_AKS: week10rudra-aks
+  STAGING_AKS: week10rudra-aks-stg
 jobs:
   # Job 1: Create Staging Infrastructure
   create_staging_infrastructure:
@@ -268,6 +268,10 @@ jobs:
     if: always() && needs.create_staging_infrastructure.result == 'success'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
       - name: Azure Login
         uses: azure/login@v1
         with:
@@ -281,18 +285,30 @@ jobs:
             --overwrite-existing
           
           kubectl get svc -n staging
-      # - name: Wait for manual testing
-      #   run: |
-      #     echo " Pausing for manual testing (5 minutes)..."
-      #     sleep 120 # Sleep for 1 minutes to allow manual testing
+      - name: Wait for manual testing
+        run: |
+          echo " Pausing for manual testing (1 minutes)..."
+          sleep 60 # Sleep for 1 minutes to allow manual testing
 
-      # - name: Cleanup Staging Environment
-      #   run: |
-      #     echo "CLEANING UP STAGING ENVIRONMENT"
+      - name: Delete Backend Infrastructure (Namespace, ConfigMaps, Secrets, Databases)
+        run: |
+          echo "Deleting backend infrastructure..."
+          cd k8s/
+          kubectl delete -f configmaps.yaml -n staging
+          kubectl delete -f secrets.yaml -n staging
+          kubectl delete -f product-db.yaml -n staging
+          kubectl delete -f order-db.yaml -n staging
+          kubectl delete -f customer-db.yaml -n staging
+      
 
-      #     echo "Deleting all Services/Deployment in staging AKS..."
-      #     # Optional: delete all deployments if you also want to remove pods
-      #     kubectl delete -f k8s/ -n staging
+      - name: Delete Backend Microservices (Product, Order)
+        run: |
+          echo "Deleting backend microservices..."
+          cd k8s/
+          kubectl delete -f product-service.yaml -n staging
+          kubectl delete -f order-service.yaml -n staging
+          kubectl delete -f customer-service.yaml -n staging
+
 
       - name: Logout from Azure
         run: az logout

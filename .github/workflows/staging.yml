@@ -289,16 +289,8 @@ jobs:
       # - name: Cleanup Staging Environment
       #   run: |
       #     echo "CLEANING UP STAGING ENVIRONMENT"
-          
-      #     echo "Deleting all services in AKS..."
-      #     # Delete all services in all namespaces
-      #     kubectl delete svc --all --all-namespaces
 
-      #     echo "Deleting all deployments in AKS..."
-      #     # Optional: delete all deployments if you also want to remove pods
-      #     kubectl delete deployment --all --all-namespaces
-
-      #     echo "Deleting all yaml in AKS..."
+      #     echo "Deleting all Services/Deployment in staging AKS..."
       #     # Optional: delete all deployments if you also want to remove pods
       #     kubectl delete -f k8s/ -n staging
 
